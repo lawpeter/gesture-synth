@@ -36,7 +36,14 @@ def main():
     sd.wait()
     sd.play(g2)
     sd.wait()
-    
+
+def play_note(note: str):
+    if note == "c":
+        sd.play(sine_tone(261.63, 0.5, 0.7))
+    elif note == "g":
+        sd.play(sine_tone(392, 0.5, 0.7))
+    elif note == "a":
+        sd.play(sine_tone(440, 0.5, 0.7))
 
 def sine_tone(
         frequency: int=440,

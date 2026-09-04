@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import time
+from audio import play_note
 
 HAND_CONNECTIONS = [
     # Palm
@@ -21,7 +22,6 @@ HAND_CONNECTIONS = [
     # Pinky
     (17, 18), (18, 19), (19, 20),
 ]
-
 
 def draw_landmarks(frame, landmarks):
     height, width, _ = frame.shape
@@ -85,6 +85,7 @@ def main():
     # with HandLandmarker.create_from_options(options) as landmarker:
     with GestureRecognizer.create_from_options(options) as gesture_recognizer:
 
+        current_gesture = "None"
         while True:
             success, frame = cap.read()
 
@@ -131,7 +132,24 @@ def main():
                     confidence = top_gesture.score
 
                     # Filter out weak detections and empty gestures
-                    if confidence > 0.6 and gesture_name != "None":
+                    if confidence > 0.4 and gesture_name != "None":
+        
+                        # ─── TYPE A: ONE-TIME TRIGGER (Run once when the gesture first appears) ───
+                        if gesture_name != current_gesture:
+                            current_gesture = gesture_name  # Update state
+                            
+                            if gesture_name == "Open_Palm":
+                                play_note('c')
+                                print("Playing note C for Open Palm gesture.")
+
+                        # ─── TYPE B: CONTINUOUS TRIGGER (Runs every frame the gesture is held) ───
+                        if gesture_name == "Thumb_Up":
+                            play_note('g')
+                            print("Playing note G for Thumbs Up gesture.")
+                        if gesture_name == "Thumb_Down":
+                            play_note('a')
+                            print("Playing note A for Thumbs Down gesture.")
+
                         # Position text slightly above the wrist (index 0)
                         height, width, _ = frame.shape
                         text_x = int(hand_landmarks[0].x * width)
@@ -146,6 +164,11 @@ def main():
                             (0, 255, 255), 
                             2
                         )
+
+                    else:
+                        # Reset state if confidence drops or hand disappears
+                        current_gesture = "None"
+                        
 
             cv2.imshow(
                 "Hand Recognition",
