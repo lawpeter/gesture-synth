@@ -39,11 +39,11 @@ def main():
 
 def play_note(note: str):
     if note == "c":
-        sd.play(sine_tone(261.63, 0.5, 0.7))
+        sd.play(sine_tone(261.63, 3, 0.7), loop=True)
     elif note == "g":
-        sd.play(sine_tone(392, 0.5, 0.7))
+        sd.play(sine_tone(392, 3, 0.7), loop=True)
     elif note == "a":
-        sd.play(sine_tone(440, 0.5, 0.7))
+        sd.play(sine_tone(440, 3, 0.7), loop=True)
 
 def sine_tone(
         frequency: int=440,

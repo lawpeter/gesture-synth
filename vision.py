@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import time
 from audio import play_note
+import sounddevice as sd
 
 HAND_CONNECTIONS = [
     # Palm
@@ -142,13 +143,14 @@ def main():
                                 play_note('c')
                                 print("Playing note C for Open Palm gesture.")
 
+                            if gesture_name == "Thumb_Up":
+                                play_note('g')
+                                print("Playing note G for Thumbs Up gesture.")
+                            if gesture_name == "Thumb_Down":
+                                play_note('a')
+                                print("Playing note A for Thumbs Down gesture.")
+                                
                         # ─── TYPE B: CONTINUOUS TRIGGER (Runs every frame the gesture is held) ───
-                        if gesture_name == "Thumb_Up":
-                            play_note('g')
-                            print("Playing note G for Thumbs Up gesture.")
-                        if gesture_name == "Thumb_Down":
-                            play_note('a')
-                            print("Playing note A for Thumbs Down gesture.")
 
                         # Position text slightly above the wrist (index 0)
                         height, width, _ = frame.shape
@@ -168,6 +170,8 @@ def main():
                     else:
                         # Reset state if confidence drops or hand disappears
                         current_gesture = "None"
+                        # Stop any audio currently playing
+                        sd.stop()
                         
 
             cv2.imshow(
