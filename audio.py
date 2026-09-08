@@ -3,38 +3,32 @@ import sounddevice as sd
 
 def main():
 
-    # Generate and play sound
+    c = sine_tone(261.63, 1, 0.7)
+    g = sine_tone(392, 1, 0.7)
+    a = sine_tone(440, 1, 0.7)
 
-    # mysound = white_noise()
-    # sd.play(mysound)
-    # sd.wait()
-
-    # mysound2 = sine_tone()
-    # sd.play(mysound2)
-    # sd.wait()
-
-    # mysound3 = sine_tone(261.63, 2, 0.7)
-    # sd.play(mysound3)
-    # sd.wait()
-
-    c = sine_tone(261.63, 0.5, 0.7)
-    g = sine_tone(392, 0.5, 0.7)
-    g2 = sine_tone(392, 1, 0.7)
-    a = sine_tone(440, 0.5, 0.7)
+    c_maj = major_chord(261.63)
+    c_oct = octave(261.63)
+    c_min = minor_chord(261.63)
+    c_maj7 = major_seventh_chord(261.63)
+    c_dom = dominant_seventh_chord(261.63)
 
     sd.play(c)
     sd.wait()
-    sd.play(c)
+
+    sd.play(c_oct)
     sd.wait()
-    sd.play(g)
+
+    sd.play(c_maj)
     sd.wait()
-    sd.play(g)
+
+    sd.play(c_maj7)
     sd.wait()
-    sd.play(a)
+
+    sd.play(c_min)
     sd.wait()
-    sd.play(a)
-    sd.wait()
-    sd.play(g2)
+
+    sd.play(c_dom)
     sd.wait()
 
 def play_note(note: str):
@@ -44,6 +38,52 @@ def play_note(note: str):
         sd.play(sine_tone(392, 3, 0.7), loop=True)
     elif note == "a":
         sd.play(sine_tone(440, 3, 0.7), loop=True)
+
+def octave(root_freq: float) -> np.ndarray:
+    # 1:2 ratio
+    root = sine_tone(root_freq)
+    oct = sine_tone(root_freq * 2)
+
+    chord = root + oct
+    return chord
+
+def major_chord(root_freq: float) -> np.ndarray:
+    # 4:5:6 ratio
+    root = sine_tone(root_freq)
+    third = sine_tone(root_freq * (5/4))
+    fifth = sine_tone(root_freq * (3/2))
+
+    chord = root + third + fifth
+    return chord
+
+def minor_chord(root_freq: float) -> np.ndarray:
+    # 10:12:15 ratio
+    root = sine_tone(root_freq)
+    minor_third = sine_tone(root_freq * (6/5))
+    fifth = sine_tone(root_freq * (3/2))
+
+    chord = root + minor_third + fifth
+    return chord
+
+def major_seventh_chord(root_freq: float) -> np.ndarray:
+    # 8:10:12:15 ratio
+    root = sine_tone(root_freq)
+    third = sine_tone(root_freq * (5/4))
+    fifth = sine_tone(root_freq * (3/2))
+    maj_seventh = sine_tone(root_freq * (15/8))
+
+    chord = root + third + fifth + maj_seventh
+    return chord
+
+def dominant_seventh_chord(root_freq: float) -> np.ndarray:
+    # 4:5:6:7 ratio
+    root = sine_tone(root_freq)
+    third = sine_tone(root_freq * (5/4))
+    fifth = sine_tone(root_freq * (3/2))
+    nat_seventh = sine_tone(root_freq * (7/4))
+
+    chord = root + third + fifth + nat_seventh
+    return chord
 
 def sine_tone(
         frequency: int=440,

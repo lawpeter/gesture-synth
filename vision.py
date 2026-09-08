@@ -149,7 +149,7 @@ def main():
                             if gesture_name == "Thumb_Down":
                                 play_note('a')
                                 print("Playing note A for Thumbs Down gesture.")
-                                
+
                         # ─── TYPE B: CONTINUOUS TRIGGER (Runs every frame the gesture is held) ───
 
                         # Position text slightly above the wrist (index 0)
