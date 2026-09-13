@@ -16,6 +16,17 @@ def main():
     sd.play(c)
     sd.wait()
 
+    sd.play(distort(c, 0.5))
+    sd.wait()
+    sd.play(distort(c, 0.4))
+    sd.wait()
+    sd.play(distort(c, 0.3))
+    sd.wait()
+    sd.play(distort(c, 0.2))
+    sd.wait()
+    sd.play(distort(c, 0.1))
+    sd.wait()
+
     sd.play(c_oct)
     sd.wait()
 
@@ -30,6 +41,9 @@ def main():
 
     sd.play(c_dom)
     sd.wait()
+
+def distort(input_wave: np.ndarray, amount: float):
+    return np.clip(input_wave, -1.0, amount)
 
 def play_note(note: str):
     if note == "c":
