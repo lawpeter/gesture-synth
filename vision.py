@@ -55,6 +55,45 @@ def draw_landmarks(frame, landmarks):
 def get_distance(p1, p2):
     return np.linalg.norm(np.array(p1) - np.array(p2))
 
+def finger_extended(wrist, knuckle, tip):
+    dist_wrist_to_tip = get_distance(wrist, tip)
+    dist_wrist_to_mcp = get_distance(wrist, knuckle)
+
+    # If wrist -> tip distance is greater than wrist -> knuckle distance
+    #   finger is extended
+    return dist_wrist_to_tip > dist_wrist_to_mcp
+
+def compute_angle(p1, p2, p3):
+
+    # Use the dot product between the two vectors p2->p1 and p2->p3 to calculate
+    #   the angle between the vectors
+    v1 = np.array(p1) - np.array(p2)
+    v2 = np.array(p3) - np.array(p2)
+    mag_v1 = np.linalg.norm(v1)
+    mag_v2 = np.linalg.norm(v2)
+    dot = np.dot(v1, v2)
+    angle = (np.arccos((dot) / (mag_v1 * mag_v2))) * (180 / np.pi)
+
+    # Determine whether thumb is outside or inside palm, and adjust angle 
+    #   accordingly
+    v3 = np.cross(np.append(v1, 0), np.append(v2, 0))
+    mult_factor = 1 if v3[2] < 0 else -1
+    angle *= mult_factor
+
+    return angle
+
+# Determine which gesture is being held up based on landmark data
+def recognize_gesture(landmarks) -> int:
+
+    thumb_extended = compute_angle(landmarks[5], landmarks[0], landmarks[4]) > 10
+    index_extended = finger_extended(landmarks[0], landmarks[5], landmarks[8])
+    middle_extended = finger_extended(landmarks[0], landmarks[9], landmarks[12])
+    ring_extended = finger_extended(landmarks[0], landmarks[13], landmarks[16])
+    pinky_extended = finger_extended(landmarks[0], landmarks[17], landmarks[20])
+
+    # Return an integer calculated by converting the binary representation of the gesture to decimal
+    return (1 * thumb_extended + 2 * index_extended + 4 * middle_extended + 8 * ring_extended + 16 * pinky_extended)
+
 def main():
     BaseOptions = mp.tasks.BaseOptions
     HandLandmarker = mp.tasks.vision.HandLandmarker
@@ -125,23 +164,12 @@ def main():
                 
                 # Extract hand coordinates into list of (x, y) points
                 landmarks = [(lm.x, lm.y) for lm in hand_landmarks]
-    
-                # Check if Index Finger is extended by comparing Tip (8) distance from Wrist (0) 
-                #   against the MCP/Knuckle joint (5) distance from Wrist (0).
-                dist_wrist_to_tip = get_distance(landmarks[0], landmarks[8])
-                dist_wrist_to_mcp = get_distance(landmarks[0], landmarks[5])
-    
-                index_extended = dist_wrist_to_tip > dist_wrist_to_mcp
 
-                status_text = (
-                    "Index: EXTENDED" 
-                    if index_extended
-                    else "Index: CURLED"
-                )
+                gesture_num = recognize_gesture(landmarks)
 
                 cv2.putText(
                     frame,
-                    status_text,
+                    "GESTURE NUM: " + str(gesture_num),
                     (10, 50),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     1,
