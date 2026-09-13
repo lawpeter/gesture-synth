@@ -1,6 +1,8 @@
 import cv2
 import mediapipe as mp
 import time
+from audio import play_note
+import sounddevice as sd
 
 HAND_CONNECTIONS = [
     # Palm
@@ -21,7 +23,6 @@ HAND_CONNECTIONS = [
     # Pinky
     (17, 18), (18, 19), (19, 20),
 ]
-
 
 def draw_landmarks(frame, landmarks):
     height, width, _ = frame.shape
@@ -53,13 +54,16 @@ def draw_landmarks(frame, landmarks):
 
 def main():
     BaseOptions = mp.tasks.BaseOptions
-    HandLandmarker = mp.tasks.vision.HandLandmarker
-    HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
+    # HandLandmarker = mp.tasks.vision.HandLandmarker
+    # HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
+    GestureRecognizer = mp.tasks.vision.GestureRecognizer
+    GestureRecognizerOptions = mp.tasks.vision.GestureRecognizerOptions
     RunningMode = mp.tasks.vision.RunningMode
 
-    options = HandLandmarkerOptions(
+    options = GestureRecognizerOptions( #HandLandmarkerOptions
         base_options=BaseOptions(
-            model_asset_path="models/hand_landmarker.task",
+            # model_asset_path="models/hand_landmarker.task",
+            model_asset_path="models/gesture_recognizer.task",
 
             # Important on macOS
             delegate=BaseOptions.Delegate.CPU,
@@ -79,8 +83,10 @@ def main():
 
     print("Press 'q' to exit.")
 
-    with HandLandmarker.create_from_options(options) as landmarker:
+    # with HandLandmarker.create_from_options(options) as landmarker:
+    with GestureRecognizer.create_from_options(options) as gesture_recognizer:
 
+        current_gesture = "None"
         while True:
             success, frame = cap.read()
 
@@ -109,13 +115,64 @@ def main():
             )
             last_timestamp_ms = timestamp_ms
 
-            result = landmarker.detect_for_video(
+            result = gesture_recognizer.recognize_for_video( # landmarker.detect
                 mp_image,
                 timestamp_ms
             )
 
-            for hand_landmarks in result.hand_landmarks:
+            #for hand_landmarks in result.hand_landmarks:
+            #    draw_landmarks(frame, hand_landmarks)
+
+            for i, hand_landmarks in enumerate(result.hand_landmarks):
                 draw_landmarks(frame, hand_landmarks)
+
+                # Fetch and draw the corresponding gesture name
+                if i < len(result.gestures) and result.gestures[i]:
+                    top_gesture = result.gestures[i][0] # Grab the highest confidence gesture
+                    gesture_name = top_gesture.category_name
+                    confidence = top_gesture.score
+
+                    # Filter out weak detections and empty gestures
+                    if confidence > 0.4 and gesture_name != "None":
+        
+                        # ─── TYPE A: ONE-TIME TRIGGER (Run once when the gesture first appears) ───
+                        if gesture_name != current_gesture:
+                            current_gesture = gesture_name  # Update state
+                            
+                            if gesture_name == "Open_Palm":
+                                play_note('c')
+                                print("Playing note C for Open Palm gesture.")
+
+                            if gesture_name == "Thumb_Up":
+                                play_note('g')
+                                print("Playing note G for Thumbs Up gesture.")
+                            if gesture_name == "Thumb_Down":
+                                play_note('a')
+                                print("Playing note A for Thumbs Down gesture.")
+
+                        # ─── TYPE B: CONTINUOUS TRIGGER (Runs every frame the gesture is held) ───
+
+                        # Position text slightly above the wrist (index 0)
+                        height, width, _ = frame.shape
+                        text_x = int(hand_landmarks[0].x * width)
+                        text_y = int(hand_landmarks[0].y * height) - 25
+
+                        cv2.putText(
+                            frame, 
+                            f"{gesture_name} ({confidence:.2f})", 
+                            (text_x, text_y), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 
+                            0.7, 
+                            (0, 255, 255), 
+                            2
+                        )
+
+                    else:
+                        # Reset state if confidence drops or hand disappears
+                        current_gesture = "None"
+                        # Stop any audio currently playing
+                        sd.stop()
+                        
 
             cv2.imshow(
                 "Hand Recognition",
